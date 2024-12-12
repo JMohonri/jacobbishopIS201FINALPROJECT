@@ -1,0 +1,373 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>BISHOP'S BRICKS</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: 'American Typewriter', serif;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 100vh;
+      background-color: #282c34;
+      flex-direction: column;
+      text-align: center;
+      color: #fff;
+    }
+
+    .navbar{
+    background-color: #646b73;
+    padding: 15px;
+    display: flex;
+    justify-content: space-around;
+    align-items: center;
+    color:#ffffff;
+    top: 0px;
+    width: 100%;
+    position: fixed;
+    left: 0px;
+    }
+
+    
+    .navbar a{
+    color:#ffffff;
+    text-decoration: none;
+    }   
+
+    .navbar a:hover{
+    outline: 2px solid #92ffd0;
+    border-radius: 10px;
+    outline-offset: 10px; 
+    }
+
+    #game-container {
+      display: flex;
+      justify-content: center;
+      align-items: flex-start;
+      flex-direction: row;
+    }
+
+    canvas {
+      border: 2px solid #fff;
+      background-color: #000;
+    }
+
+    #title {
+      color: #fff;
+      font-size: 72px;
+      margin-bottom: 20px;
+    }
+
+    #score-instructions-box {
+      width: 300px;
+      background-color: #282c34; /* Match the background color */
+      color: white;
+      padding: 20px;
+      margin-top: 20px;
+      border-radius: 5px; /* Optional: Add rounded corners */
+      display: flex;
+      flex-direction: column;
+      align-items: center; /* Center the contents horizontally */
+    }
+
+    #score-instructions-box h3 {
+      text-align: center;
+      margin-bottom: 15px;
+      font-weight: bold;
+    }
+
+    #score-instructions-box ul {
+      list-style-type: none;
+      padding-left: 0;
+    }
+
+    #score-instructions-box li {
+      margin-bottom: 10px;
+    }
+
+    hr {
+      border: 1px solid #fff;
+      margin: 30px 0;
+    }
+
+    #current-score {
+      font-size: 24px;
+      font-weight: bold;
+      margin-top: 20px;
+    }
+
+    #play-again-btn {
+      display: none;
+      margin-top: 20px;
+      padding: 10px 20px;
+      font-size: 16px;
+      background-color: #f39c12;
+      color: #fff;
+      border: none;
+      cursor: pointer;
+      border-radius: 5px;
+      width: 100%; /* Make the button take up full width */
+      max-width: 150px; /* Set a max width for the button */
+      text-align: center; /* Ensure text is centered inside the button */
+    }
+
+    #play-again-btn:hover {
+      background-color: #e67e22;
+    }
+
+    #game-over {
+      display: none;
+      color: red;
+      font-size: 36px;
+      font-weight: bold;
+      margin-top: 20px;
+    }
+
+    #start-btn {
+      display: block;
+      margin-top: 20px;
+      padding: 10px 20px;
+      font-size: 16px;
+      background-color: #1abc9c;
+      color: #fff;
+      border: none;
+      cursor: pointer;
+      border-radius: 5px;
+      width: 100%; /* Make the button take up full width */
+      max-width: 150px; /* Set a max width for the button */
+      text-align: center; /* Ensure text is centered inside the button */
+    }
+
+    #start-btn:hover {
+      background-color: #16a085;
+    }
+  </style>
+  <link href="https://fonts.googleapis.com/css2?family=American+Typewriter&display=swap" rel="stylesheet">
+</head>
+<body>
+    <!--NAVIGATION BAR-->
+    <div class="navbar">
+        <a href = "../index.html">HOME</a>
+        <a href = "../resume.html">RESUME</a>
+        <a href = "Scratch.html">SCRATCH</a>
+        <a href = "AIWebApp.html">AI GAME</a>
+    </div>
+    <!--EVERYTHING ELSE-->
+  <div id="title"> BISHOP'S BRICKS</div>
+
+  <div id="game-container">
+    <div id="game">
+      <canvas id="tetris" width="300" height="600"></canvas>
+    </div>
+
+    <div id="score-instructions-box">
+      <h3>HIGH SCORE</h3>
+      <ul>
+        <li><strong>Recent Score:</strong> <span id="recent-score">0</span></li>
+        <li><strong>Highest Score This Session:</strong> <span id="session-high-score">0</span></li>
+      </ul>
+
+      <hr style="border: 2; border-top: 2px #ffffff; width: 50%; margin: 20px auto;">
+
+      <h3>CONTROLS</h3>
+      <ul>
+        <li><strong>Left Arrow:</strong> Move Left</li>
+        <li><strong>Right Arrow:</strong> Move Right</li>
+        <li><strong>Down Arrow:</strong> Accelerate</li>
+        <li><strong>Space Bar:</strong> Rotate</li>
+      </ul>
+
+      <hr style="border: 2; border-top: 2px #ffffff; width: 50%; margin: 20px auto;">
+
+      <div id="current-score">
+        <strong>Current Score:</strong> <span id="score">0</span>
+      </div>
+
+      <button id="play-again-btn">Play Again</button>
+      <button id="start-btn">Start Game</button>
+      <div id="game-over">GAME OVER</div>
+    </div>
+  </div>
+
+  <script>
+    const canvas = document.getElementById("tetris");
+    const context = canvas.getContext("2d");
+
+    const ROWS = 20;
+    const COLUMNS = 10;
+    const BLOCK_SIZE = 30;
+    const BORDER_COLOR = "#000";
+
+    const TETROMINOS = [
+      { shape: [[1, 1, 1], [0, 1, 0]], color: "#f2a3f7" },
+      { shape: [[1, 1, 0], [0, 1, 1]], color: "#33ff57" },
+      { shape: [[0, 1, 1], [1, 1, 0]], color: "#3357ff" },
+      { shape: [[1, 1], [1, 1]], color: "#f1c40f" },
+      { shape: [[1, 0, 0], [1, 1, 1]], color: "#e74c3c" }, // Red L-shape changed to grey
+      { shape: [[0, 0, 1], [1, 1, 1]], color: "#9b59b6" },
+      { shape: [[1, 1, 1, 1]], color: "#1abc9c" },
+    ];
+
+    let grid = Array.from({ length: ROWS }, () => Array(COLUMNS).fill(0));
+    let score = 0;
+    let sessionHighScore = 0;
+    let gameOver = false;
+    let currentPiece = generatePiece();
+    let currentX = 3;
+    let currentY = 0;
+
+    let gameInterval; // Declare game interval variable to control the game loop
+
+    function drawGrid() {
+      context.clearRect(0, 0, canvas.width, canvas.height);
+      for (let row = 0; row < ROWS; row++) {
+        for (let col = 0; col < COLUMNS; col++) {
+          if (grid[row][col]) {
+            const color = grid[row][col];
+            context.fillStyle = color;
+            context.fillRect(col * BLOCK_SIZE, row * BLOCK_SIZE, BLOCK_SIZE, BLOCK_SIZE);
+            context.strokeStyle = BORDER_COLOR;
+            context.lineWidth = 2;
+            context.strokeRect(col * BLOCK_SIZE, row * BLOCK_SIZE, BLOCK_SIZE, BLOCK_SIZE);
+          }
+        }
+      }
+    }
+
+    function drawPiece() {
+      for (let row = 0; row < currentPiece.shape.length; row++) {
+        for (let col = 0; col < currentPiece.shape[row].length; col++) {
+          if (currentPiece.shape[row][col]) {
+            context.fillStyle = currentPiece.color;
+            context.fillRect((currentX + col) * BLOCK_SIZE, (currentY + row) * BLOCK_SIZE, BLOCK_SIZE, BLOCK_SIZE);
+            context.strokeStyle = BORDER_COLOR;
+            context.lineWidth = 2;
+            context.strokeRect((currentX + col) * BLOCK_SIZE, (currentY + row) * BLOCK_SIZE, BLOCK_SIZE, BLOCK_SIZE);
+          }
+        }
+      }
+    }
+
+    function generatePiece() {
+      const randIndex = Math.floor(Math.random() * TETROMINOS.length);
+      return TETROMINOS[randIndex];
+    }
+
+    function rotatePiece() {
+      const rotatedPiece = currentPiece.shape[0].map((_, index) =>
+        currentPiece.shape.map(row => row[index])
+      ).reverse();
+      return rotatedPiece;
+    }
+
+    function validMove(piece, offsetX, offsetY) {
+      for (let row = 0; row < piece.length; row++) {
+        for (let col = 0; col < piece[row].length; col++) {
+          if (piece[row][col]) {
+            const newX = currentX + col + offsetX;
+            const newY = currentY + row + offsetY;
+            if (newX < 0 || newX >= COLUMNS || newY >= ROWS || grid[newY] && grid[newY][newX]) {
+              return false;
+            }
+          }
+        }
+      }
+      return true;
+    }
+
+    function lockPiece() {
+      for (let row = 0; row < currentPiece.shape.length; row++) {
+        for (let col = 0; col < currentPiece.shape[row].length; col++) {
+          if (currentPiece.shape[row][col]) {
+            grid[currentY + row][currentX + col] = currentPiece.color;
+          }
+        }
+      }
+      let rowsCleared = 0;
+      for (let row = ROWS - 1; row >= 0; row--) {
+        if (grid[row].every(cell => cell !== 0)) {
+          grid.splice(row, 1);
+          grid.unshift(Array(COLUMNS).fill(0));
+          score += 100;
+          rowsCleared++;
+        }
+      }
+
+      if (rowsCleared > 0) {
+        document.getElementById("score").textContent = score;
+        if (score > sessionHighScore) {
+          sessionHighScore = score;
+          document.getElementById("session-high-score").textContent = sessionHighScore;
+        }
+      }
+
+      if (score > sessionHighScore) {
+        sessionHighScore = score;
+        document.getElementById("session-high-score").textContent = sessionHighScore;
+      }
+    }
+
+    function gameOverCheck() {
+      for (let col = 0; col < COLUMNS; col++) {
+        if (grid[0][col] !== 0) {
+          gameOver = true;
+          document.getElementById("game-over").style.display = "block";
+          document.getElementById("play-again-btn").style.display = "block";
+          clearInterval(gameInterval);
+          break;
+        }
+      }
+    }
+
+    function gameLoop() {
+      if (gameOver) return;
+      drawGrid();
+      drawPiece();
+      if (validMove(currentPiece.shape, 0, 1)) {
+        currentY++;
+      } else {
+        lockPiece();
+        currentPiece = generatePiece();
+        currentX = 3;
+        currentY = 0;
+        gameOverCheck();
+      }
+    }
+
+    document.addEventListener("keydown", function(event) {
+      if (gameOver) return;
+      if (event.key === "ArrowLeft" && validMove(currentPiece.shape, -1, 0)) {
+        currentX--;
+      } else if (event.key === "ArrowRight" && validMove(currentPiece.shape, 1, 0)) {
+        currentX++;
+      } else if (event.key === "ArrowDown" && validMove(currentPiece.shape, 0, 1)) {
+        currentY++;
+      } else if (event.key === " " && validMove(rotatePiece(), 0, 0)) {
+        currentPiece.shape = rotatePiece();
+      }
+    });
+
+    document.getElementById("play-again-btn").addEventListener("click", function() {
+      location.reload();
+    });
+
+    document.getElementById("start-btn").addEventListener("click", function() {
+      startGame();
+      document.getElementById("start-btn").style.display = "none"; // Hide start button once game starts
+    });
+
+    function startGame() {
+      gameInterval = setInterval(gameLoop, 500);
+    }
+  </script>
+</body>
+</html>
+
